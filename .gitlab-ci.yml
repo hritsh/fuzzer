@@ -8,11 +8,10 @@ before_script:
   - service mysql start
   - echo '[+] Starting apache'
   - service apache2 start
+  - pip3 install mechanicalsoup argparse
 fuzzrunner:
   script:
     # here is where you can write your commands to run your fuzzer or any custom setup commands
-    - pip3 install mechanicalsoup
-    - pip3 install argparse
     # need some example files for vectors and words? These are on the image
     - cat /words.txt
     - cat /vectors.txt
