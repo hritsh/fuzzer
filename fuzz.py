@@ -8,11 +8,13 @@ def discover(args):
     browser = mechanicalsoup.StatefulBrowser(user_agent='MechanicalSoup')
     if args.custom_auth:
         # Setup Database
+        print("SETTING UP DATABASE")
         browser.open(args.url + "/setup.php")
         browser.select_form('form[action="#"]')
         response = browser.submit_selected()
 
         # Login
+        print("LOGGING IN")
         browser.open(args.url)
         browser.select_form('form[action="login.php"]')
         browser['username'] = 'admin'
@@ -20,14 +22,16 @@ def discover(args):
         response = browser.submit_selected()
 
         # Set Security to Low
+        print("CHANGING SECURITY TO LOW")
         browser.open(args.url + "/security.php")
         browser.follow_link('security.php')
         browser.select_form('form[action="#"]')
         browser['security'] = 'low'
         response = browser.submit_selected()
 
-        browser.open(args.url)
-        print(browser.page)
+    # Print browser page
+    browser.open(args.url)
+    print(browser.page)
 
 def test(args):
     """
@@ -36,7 +40,10 @@ def test(args):
     pass
     
 
-if __name__ == "__main__":
+def main():
+    """
+    Main program.
+    """
     parser = argparse.ArgumentParser(description="A command line fuzz-testing tool")
 
     # Choice for the 'discover' and 'test' commands
@@ -57,3 +64,6 @@ if __name__ == "__main__":
         test(args)
     else:
         parser.print_help()
+
+if __name__ == "__main__":
+    main()
