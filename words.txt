@@ -1,0 +1,5 @@
+settings.php
+admin.php
+admin.jsp
+login.php
+about.html

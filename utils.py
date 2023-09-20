@@ -11,9 +11,6 @@ def get_combinations(file):
         file = file.split('.')
         fnames.add(file[0])
         exts.add(file[1].strip())
-    
-    fnames.add("login")
-    fnames.add("about")
 
     for fname in fnames:
         for ext in exts:
