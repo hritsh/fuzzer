@@ -72,6 +72,9 @@ def discover(args):
     # Start crawling from base link
     crawl(args.url)
 
+    # Crawl guessed pages if not already crawled
+    for link in guessed: crawl(link)
+
     # Print Links Discovered
     print("*"*48 + "\nLINKS DISCOVERED\n" + "*"*48)
     for l in visited:
@@ -80,6 +83,7 @@ def discover(args):
 
     # Print Guessed Pages
     print("*"*48 + "\nPAGES SUCCESSFULLY GUESSED\n" + "*"*48)
+    if not args.common_words: print("Common Word File Not Specified")
     for l in guessed:
         print(l)
     print("*"*48 + "\n\n")
