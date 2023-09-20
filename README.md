@@ -6,7 +6,8 @@ An exploratory command line fuzz-testing tool made  used for finding weaknesses 
 ## Installation
 To get the environment ready:
 1. Make sure you have ```python``` and ```dvwa``` (or any other web application) installed and running.
-2. Clone the project using ssh ```git clone git@kgcoe-git.rit.edu:hm2310/fuzzer.git```.
+2. Install ```MechanicalSoup``` and ```argparse``` using ```pip3```
+3. Clone the project using ssh ```git clone git@kgcoe-git.rit.edu:hm2310/fuzzer.git```.
 
 ## Usage
 To run the discover command on DVWA or another web app, run the following commands in your terminal respectively:
