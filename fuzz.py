@@ -53,7 +53,7 @@ def discover(args):
     skiplinks = ["."]
     base_url = args.url
 
-    if args.common_words: combs = utils.get_combinations(args.common_words)
+    if args.common_words: combs = utils.get_combinations("./" + args.common_words)
 
     if args.custom_auth: setup()
 
