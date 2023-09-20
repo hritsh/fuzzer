@@ -18,6 +18,6 @@ fuzzrunner:
     - cat /badchars.txt
     # An example fuzzer command. Note the url is DIFFERENT than XAMPP example (no /dvwa).
     # Remove whatever you need to.
-    - python3 fuzz.py discover http://localhost/ --custom-auth=dvwa
-    - python3 fuzz.py discover http://127.0.0.1/fuzzer-tests
+    - python3 fuzz.py discover http://localhost/ --custom-auth=dvwa --common-words=words.txt
+    - python3 fuzz.py discover http://127.0.0.1/fuzzer-tests --common-words=words.txt
   stage: test
