@@ -138,7 +138,7 @@ def crawl(url):
             href = link["href"]
             if href.startswith("http://") or href.startswith("https://"): continue
             if href in skiplinks or href in visited or href == url: continue
-            print("Current Page: " + url + "\tCrawling link: " + href)
+            if args.verbose: print("Current Page: " + url + "\tCrawling link: " + href)
             crawl(href)
     except:
         return
@@ -152,13 +152,13 @@ def guess(url):
         for comb in combs:
             try:
                 page = browser.open(url + comb)
-                print("Guessing " + page.url)
+                if args.verbose: print("Guessing " + page.url)
                 if page is None or page.status_code // 100 not in (2,3): continue
-                print("Found Guess: " + page.url)
+                if args.verbose: print("Found Guess: " + page.url)
                 guessed.add(page.url)
                 parse_urls[url] = parse_urls.get(url, [url])
             except Exception as e:
-                print(e)
+                if args.verbose: print(e)
                 continue
 
 
@@ -186,6 +186,9 @@ def main():
 
     # Common words argument    
     parser.add_argument("--common-words", type=str, required=False)
+
+    # Verbose argument    
+    parser.add_argument("--verbose", "-v", action="store_true")
 
     global args
     args = parser.parse_args()
