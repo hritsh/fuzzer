@@ -33,7 +33,7 @@ def print_table(data):
     max_value_len = max(len(str(d.get('value', ''))) for d in data)
 
     # Define the format for each row
-    row_format = f"| {{:<{max_url_len}}} | {{:<{max_name_len}}} | {{:<{max_value_len}}} |"
+    row_format = row_format = "| {{:<{}}} | {{:<{}}} | {{:<{}}} |".format(max_url_len, max_name_len, max_value_len)
 
     # Print the header
     header = row_format.format("URL", "Name", "Value")
