@@ -1,7 +1,6 @@
 import argparse
 import mechanicalsoup
 import utils
-import requests
 
 def setup():
     # Setup Database
@@ -41,14 +40,18 @@ def discover(args):
     global cookies
     global combs
     global skiplinks
+    global base_url
+    global guessed
 
     browser = mechanicalsoup.StatefulBrowser(user_agent='MechanicalSoup')
 
     # Initialize visited links and data
     visited = []
-    parse_urls = []
+    guessed = set()
+    parse_urls = {}
     form_inputs = []
     skiplinks = ["."]
+    base_url = args.url
 
     if args.common_words: combs = utils.get_combinations(args.common_words)
 
@@ -61,40 +64,101 @@ def discover(args):
     # Get cookies
     browser.open(args.url)
     cookies = browser.get_cookiejar()
-    print(cookies)
+    cookies = [{"name": c.name, "value": c.value} for c in cookies]
+
+    # Guess combinations
+    guess(args.url)
 
     # Start crawling from base link
     crawl(args.url)
 
+    # Print Links Discovered
+    print("*"*48 + "\nLINKS DISCOVERED\n" + "*"*48)
+    for l in visited:
+        print(l)
+    print("*"*48 + "\n\n")
+
+    # Print Guessed Pages
+    print("*"*48 + "\nPAGES SUCCESSFULLY GUESSED\n" + "*"*48)
+    for l in guessed:
+        print(l)
+    print("*"*48 + "\n\n")
+
+    # Print Parsed URLs
+    print("*"*48 + "\nPARSED URLS\n" + "*"*48)
+    for url in parse_urls:
+        print(parse_urls[url])
+    print("*"*48 + "\n\n")
+
+    # Print Form Inputs
+    print("*"*48 + "\nFORM INPUTS\n" + "*"*48)
+    # for url in form_inputs:
+    #     print(url)
+    utils.print_table(form_inputs)
+
+    print("*"*48 + "\n\n")
+
+    # Print Cookies
+    print("*"*48 + "\nCOOKIES\n" + "*"*48)
+    for c in cookies: print(c["name"] + "=" + c["value"])
+    print("*"*48)
+
 def crawl(url):
-    browser.absolute_url(url)
-    print("Current Page: " + url)
+    """
+    Crawl a URL to parse and search for inputs. Can be Called Recursively
+    """
+    url = browser.absolute_url(url)
     if url in visited: return
-    visited.append(url)
 
     try:
-        res = browser.open(url)
-        print(res.status_code)
-        if res.status_code // 100 not in (2,3): return
+        page = browser.open(url)
+
+        # Check if Page Exists
+        if page is None or page.status_code // 100 not in (2,3): return
+        visited.append(url)
+        
+        # Parse URLs
+        if '?' in url:
+            base_url, query_params = url.split('?', 1)
+            query_params = query_params.split('&')
+            parse_urls[base_url] = parse_urls.get(base_url, [base_url]) + query_params
+        else:
+            parse_urls[url] = [url]
+
+        # Find Form Inputs
+        inputs = browser.page.find_all('input')
+        for input_tag in inputs:
+            name = input_tag.get('name')
+            value = input_tag.get('value', '')
+            input_dict = {"url": page.url, "name": name, "value": value}
+            form_inputs.append(input_dict)
+
+        # Traverse Links
         for link in browser.links():
             href = link["href"]
-            if href.startswith("http://") or href.startswith("https://") or href in url: continue
-            href = browser.absolute_url(href)
+            if href.startswith("http://") or href.startswith("https://"): continue
             if href in skiplinks or href in visited or href == url: continue
             print("Current Page: " + url + "\tCrawling link: " + href)
             crawl(href)
     except:
         return
 
+def guess(url):
+    """
+    Guess if Common Words Argument is Provided
+    """
     if args.common_words:
+        browser.open(url)
         for comb in combs:
             try:
-                comb = browser.absolute_url(comb)
-                print("Testing combination: " + comb)
-                res = browser.open(comb)
-                if res.status_code // 100 not in (2,3): continue
-                crawl(url + comb + "/")
-            except:
+                page = browser.open(url + comb)
+                print("Guessing " + page.url)
+                if page is None or page.status_code // 100 not in (2,3): continue
+                print("Found Guess: " + page.url)
+                guessed.add(page.url)
+                parse_urls[url] = parse_urls.get(url, [url])
+            except Exception as e:
+                print(e)
                 continue
 
 
@@ -121,7 +185,7 @@ def main():
     parser.add_argument("--custom-auth", type=str)
 
     # Common words argument    
-    parser.add_argument("--common-words", type=str)
+    parser.add_argument("--common-words", type=str, required=False)
 
     global args
     args = parser.parse_args()
@@ -130,7 +194,6 @@ def main():
     # Go to Functions according to command selected
     if args.command == "discover":
         discover(args)
-        print(visited)
     elif args.command == "test":
         test(args)
     else:
