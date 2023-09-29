@@ -136,30 +136,30 @@ def discover(args, test=False):
             print("URL: " + d[0])
             print("Input Tag: " + d[1])
             print("Input Vector: " + d[2])
-            print("Sensitive Data Found: " + d[3] + "\n")
+            print("Sensitive Data Found: " + d[3] + "\n*")
         print("*"*48 + "\n\n")
 
         print("*"*48 + "\nUNSANITIZED INPUTS\n" + "*"*48)
         for d in unsanitized_inputs:
             print("URL: " + d[0])
             print("Input Tag: " + d[1])
-            print("Unsanitized Input Found: " + d[2] + "\n")
+            print("Unsanitized Input Found: " + d[2] + "\n*")
         print("*"*48 + "\n\n")
 
         print("*"*48 + "\nDELAYED RESPONSES\n" + "*"*48)
         for d in delayed_responses:
             print("URL: " + d[0])
-            print("Response Time: " + str(d[1]) + "ms\n")
+            print("Response Time: " + str(d[1]) + "ms\n*")
         print("*"*48 + "\n\n")
 
         print("*"*48 + "\nHTTP ERRORS\n" + "*"*48)
         for d in http_errors:
             print("URL: " + d[0])
             print("HTTP Status Code: " + str(d[1]))
-            print("HTTP Status Code Description: " + d[2] + "\n")
+            print("HTTP Status Code Description: " + d[2] + "\n*")
         print("*"*48 + "\n\n")
 
-        print("*"*48 + "\nTOTALS\n" + "*"*48)
+        print("*"*48 + "\nTEST SUMMARY\n" + "*"*48)
         print("Total Sensitive Data Found: " + str(len(sensitive_data)))
         print("Total Unsanitized Inputs Found: " + str(len(unsanitized_inputs)))
         print("Total Delayed Responses Found: " + str(len(delayed_responses)))
@@ -254,7 +254,7 @@ def test(url, inputs):
                 # check for sensitive data, delayed response or non 200 http response codes
                 for s in sensitive:
                     if s in page.text:
-                        sensitive_data.append([page.url, input_tag.prettify(), vector, s])
+                        sensitive_data.append([page.url, input_tag.prettify().strip(), vector, s])
                 if page.status_code != 200:
                     http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
                 if page.elapsed.total_seconds() * 1000 > float(slow):
@@ -270,7 +270,7 @@ def test(url, inputs):
                 browser[name] = vector
                 page = browser.submit_selected()
                 if vector in page.text:
-                    unsanitized_inputs.append([page.url, input_tag.prettify(),vector])
+                    unsanitized_inputs.append([page.url, input_tag.prettify().strip(),vector])
                 if page.status_code != 200:
                     http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
 
