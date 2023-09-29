@@ -254,7 +254,7 @@ def test(url, inputs):
                 # check for sensitive data, delayed response or non 200 http response codes
                 for s in sensitive:
                     if s in page.text:
-                        sensitive_data.append([page.url, input_tag, vector, s])
+                        sensitive_data.append([page.url, input_tag.prettify(), vector, s])
                 if page.status_code != 200:
                     http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
                 if page.elapsed.total_seconds() * 1000 > float(slow):
@@ -270,7 +270,7 @@ def test(url, inputs):
                 browser[name] = vector
                 page = browser.submit_selected()
                 if vector in page.text:
-                    unsanitized_inputs.append([page.url, input_tag,vector])
+                    unsanitized_inputs.append([page.url, input_tag.prettify(),vector])
                 if page.status_code != 200:
                     http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
 
