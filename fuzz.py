@@ -134,7 +134,7 @@ def discover(args, test=False):
         print("*"*48 + "\nSENSITIVE DATA\n" + "*"*48)
         for d in sensitive_data:
             print("URL: " + d[0])
-            print("Input Name: " + d[1])
+            print("Input Tag: " + d[1])
             print("Input Vector: " + d[2])
             print("Sensitive Data Found: " + d[3] + "\n")
         print("*"*48 + "\n\n")
@@ -142,7 +142,7 @@ def discover(args, test=False):
         print("*"*48 + "\nUNSANITIZED INPUTS\n" + "*"*48)
         for d in unsanitized_inputs:
             print("URL: " + d[0])
-            print("Input Name: " + d[1])
+            print("Input Tag: " + d[1])
             print("Unsanitized Input Found: " + d[2] + "\n")
         print("*"*48 + "\n\n")
 
@@ -254,7 +254,7 @@ def test(url, inputs):
                 # check for sensitive data, delayed response or non 200 http response codes
                 for s in sensitive:
                     if s in page.text:
-                        sensitive_data.append([page.url, name, vector, s])
+                        sensitive_data.append([page.url, input_tag, vector, s])
                 if page.status_code != 200:
                     http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
                 if page.elapsed.total_seconds() * 1000 > float(slow):
@@ -270,7 +270,7 @@ def test(url, inputs):
                 browser[name] = vector
                 page = browser.submit_selected()
                 if vector in page.text:
-                    unsanitized_inputs.append([page.url, name,vector])
+                    unsanitized_inputs.append([page.url, input_tag,vector])
                 if page.status_code != 200:
                     http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
 
