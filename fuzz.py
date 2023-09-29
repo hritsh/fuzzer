@@ -132,30 +132,38 @@ def discover(args, test=False):
     if test:
         print("*"*48 + "\nTest Results\n" + "*"*48)
         print("*"*48 + "\nSENSITIVE DATA\n" + "*"*48)
-        sensitive_data.insert(0, ['URL', 'Input Name', 'Input Vector', 'Sensitive Data Found'])
-        utils.tabulate(sensitive_data)
+        for d in sensitive_data:
+            print("URL: " + d[0])
+            print("Input Name: " + d[1])
+            print("Input Vector: " + d[2])
+            print("Sensitive Data Found: " + d[3] + "\n")
         print("*"*48 + "\n\n")
 
         print("*"*48 + "\nUNSANITIZED INPUTS\n" + "*"*48)
-        unsanitized_inputs.insert(0, ['URL', 'Input Name', 'Input Vector', 'Unsanitized Input Found'])
-        utils.tabulate(unsanitized_inputs)
+        for d in unsanitized_inputs:
+            print("URL: " + d[0])
+            print("Input Name: " + d[1])
+            print("Unsanitized Input Found: " + d[2] + "\n")
         print("*"*48 + "\n\n")
 
         print("*"*48 + "\nDELAYED RESPONSES\n" + "*"*48)
-        delayed_responses.insert(0, ['URL', 'Response Time (ms)'])
-        utils.tabulate(delayed_responses)
+        for d in delayed_responses:
+            print("URL: " + d[0])
+            print("Response Time: " + str(d[1]) + "ms\n")
         print("*"*48 + "\n\n")
 
         print("*"*48 + "\nHTTP ERRORS\n" + "*"*48)
-        http_errors.insert(0, ['URL', 'Status Code', 'Status Code Description'])
-        utils.tabulate(http_errors)
+        for d in http_errors:
+            print("URL: " + d[0])
+            print("HTTP Status Code: " + str(d[1]))
+            print("HTTP Status Code Description: " + d[2] + "\n")
         print("*"*48 + "\n\n")
 
         print("*"*48 + "\nTOTALS\n" + "*"*48)
-        print("Total Sensitive Data Found: " + str(len(sensitive_data) - 1))
-        print("Total Unsanitized Inputs Found: " + str(len(unsanitized_inputs) - 1))
-        print("Total Delayed Responses Found: " + str(len(delayed_responses) - 1))
-        print("Total HTTP Errors Found: " + str(len(http_errors) - 1))
+        print("Total Sensitive Data Found: " + str(len(sensitive_data)))
+        print("Total Unsanitized Inputs Found: " + str(len(unsanitized_inputs)))
+        print("Total Delayed Responses Found: " + str(len(delayed_responses)))
+        print("Total HTTP Errors Found: " + str(len(http_errors)))
         print("*"*48 + "\n\n")
 
 
