@@ -51,3 +51,19 @@ def print_table(data):
         prev_url = url
 
     print(separator)
+
+def tabulate(table):
+    """
+    Pretty print table data
+    """
+    cols = []
+    for col in zip(*table):
+        just = str.ljust if isinstance(col[1], str) else str.rjust
+        strings = [str(item) for item in col]
+        width = max(map(len, strings))
+        cols.append(
+            [strings[0].ljust(width), (len(strings[0]) * "-").ljust(width)]
+            + [just(string, width) for string in strings[1:]]
+        )
+
+    print("\n".join("  ".join(line) for line in zip(*cols)))

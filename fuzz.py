@@ -29,7 +29,7 @@ def setup():
         skiplinks.append("logout.php")
 
 
-def discover(args):
+def discover(args, test=False):
     """
     Output a comprehensive, human-readable list of all discovered inputs to the system. Techniques include both crawling and guessing.
     """
@@ -52,6 +52,27 @@ def discover(args):
     form_inputs = []
     skiplinks = ["."]
     base_url = args.url
+
+    # Initialize Test variables
+
+    if test:
+        global vectors
+        global sanitized
+        global sensitive
+        global slow
+        global unsanitized_inputs
+        global sensitive_data
+        global delayed_responses
+        global http_errors
+
+        vectors = [c.strip() for c in open(args.vectors).readlines()]
+        sanitized = [c.strip() for c in open(args.sanitized_chars).readlines()] if args.sanitized_chars else ['<','>']
+        sensitive = [c.strip() for c in open(args.sensitive).readlines()]
+        slow = args.slow if args.slow else 500
+        unsanitized_inputs = []
+        sensitive_data = []
+        delayed_responses = []
+        http_errors = []
 
     if args.common_words: combs = utils.get_combinations(args.common_words)
 
@@ -107,6 +128,37 @@ def discover(args):
     for c in cookies: print(c["name"] + "=" + c["value"])
     print("*"*48)
 
+    # If Test, print Sensitive Data, Unsanitized Inputs, Delayed Responses and HTTP Errors
+    if test:
+        print("*"*48 + "\nTest Results\n" + "*"*48)
+        print("*"*48 + "\nSENSITIVE DATA\n" + "*"*48)
+        sensitive_data.insert(0, ['URL', 'Input Name', 'Input Vector', 'Sensitive Data Found'])
+        utils.tabulate(sensitive_data)
+        print("*"*48 + "\n\n")
+
+        print("*"*48 + "\nUNSANITIZED INPUTS\n" + "*"*48)
+        unsanitized_inputs.insert(0, ['URL', 'Input Name', 'Input Vector', 'Unsanitized Input Found'])
+        utils.tabulate(unsanitized_inputs)
+        print("*"*48 + "\n\n")
+
+        print("*"*48 + "\nDELAYED RESPONSES\n" + "*"*48)
+        delayed_responses.insert(0, ['URL', 'Response Time (ms)'])
+        utils.tabulate(delayed_responses)
+        print("*"*48 + "\n\n")
+
+        print("*"*48 + "\nHTTP ERRORS\n" + "*"*48)
+        http_errors.insert(0, ['URL', 'Status Code', 'Status Code Description'])
+        utils.tabulate(http_errors)
+        print("*"*48 + "\n\n")
+
+        print("*"*48 + "\nTOTALS\n" + "*"*48)
+        print("Total Sensitive Data Found: " + str(len(sensitive_data) - 1))
+        print("Total Unsanitized Inputs Found: " + str(len(unsanitized_inputs) - 1))
+        print("Total Delayed Responses Found: " + str(len(delayed_responses) - 1))
+        print("Total HTTP Errors Found: " + str(len(http_errors) - 1))
+        print("*"*48 + "\n\n")
+
+
 def crawl(url):
     """
     Crawl a URL to parse and search for inputs. Can be Called Recursively
@@ -116,6 +168,11 @@ def crawl(url):
 
     try:
         page = browser.open(url)
+
+        if page.status_code != 200:
+                    http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
+        if page.elapsed.total_seconds() * 1000 > float(slow):
+            delayed_responses.append([page.url, page.elapsed.total_seconds() * 1000])
 
         # Check if Page Exists
         if page is None or page.status_code // 100 not in (2,3): return
@@ -136,6 +193,9 @@ def crawl(url):
             value = input_tag.get('value', '')
             input_dict = {"url": page.url, "name": name, "value": value}
             form_inputs.append(input_dict)
+        
+        if args.command == 'test':
+            test(browser.url,inputs)
 
         # Traverse Links
         for link in browser.links():
@@ -166,12 +226,77 @@ def guess(url):
                 continue
 
 
-def test(args):
+def test(url, inputs):
     """
     Discover all inputs, then attempt a list of exploit vectors on those inputs. Report anomalies that could be vulnerabilities.
     """
-    pass
-    
+
+    # Check all inputs
+    for input_tag in inputs:
+        name = input_tag.get('name')
+        if name == 'submit' or name == 'Submit' or name == 'SUBMIT': continue
+        # Check for sensitive data
+        for vector in vectors:
+            try:
+                # submit each vector in the input field and check the response page for sensitive data
+                browser.open(url)
+                browser.select_form('form')
+                browser[name] = vector
+                page = browser.submit_selected()
+                # check for sensitive data, delayed response or non 200 http response codes
+                for s in sensitive:
+                    if s in page.text:
+                        sensitive_data.append([page.url, name, vector, s])
+                if page.status_code != 200:
+                    http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
+                if page.elapsed.total_seconds() * 1000 > float(slow):
+                    delayed_responses.append([page.url, page.elapsed.total_seconds() * 1000])
+            except Exception as e:
+                if args.verbose: print(e)
+                continue
+        # Check for unsanitized data
+        for vector in sanitized:
+            try:
+                browser.open(url)
+                browser.select_form('form')
+                browser[name] = vector
+                page = browser.submit_selected()
+                if vector in page.text:
+                    unsanitized_inputs.append([page.url, name,vector])
+                if page.status_code != 200:
+                    http_errors.append([page.url, page.status_code, get_status_code(page.status_code)])
+
+                if page.elapsed.total_seconds() * 1000 > float(slow):
+                    delayed_responses.append([page.url, page.elapsed.total_seconds() * 1000])
+            except Exception as e:
+                if args.verbose: print(e)
+                continue
+
+
+def get_status_code(code):
+    """
+    Get the status code information from the code.
+    """
+    if code == 200:
+        return "Success (OK)"
+    elif code == 301:
+        return "Moved Permanently"
+    elif code == 302:
+        return "Found (Redirect)"
+    elif code == 303:
+        return "See Other (Redirect)"
+    elif code == 400:
+        return "Bad Request"
+    elif code == 401:
+        return "Unauthorized"
+    elif code == 403:
+        return "Forbidden"
+    elif code == 404:
+        return "Not Found"
+    elif code >= 500 and code <= 599:
+        return "Server Error"
+    else:
+        return "Unknown"
 
 def main():
     """
@@ -194,15 +319,27 @@ def main():
     # Verbose argument    
     parser.add_argument("--verbose", "-v", action="store_true")
 
+    # Vectors argument
+    parser.add_argument("--vectors", type=str)
+
+    # Sanitized Chars argument
+    parser.add_argument("--sanitized-chars", type=str)
+
+    # Sensitive argument
+    parser.add_argument("--sensitive", type=str)
+
+    # Slow argument
+    parser.add_argument("--slow", type=str)
+
     global args
     args = parser.parse_args()
 
 
     # Go to Functions according to command selected
     if args.command == "discover":
-        discover(args)
+        discover(args, test=False)
     elif args.command == "test":
-        test(args)
+        discover(args, test=True)
     else:
         parser.print_help()
 
